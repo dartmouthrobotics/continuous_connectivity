@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="1f78dcd9-7630-4a5b-b9cf-39028943040d" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/msg/Auction.msg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/msg/Frontier.msg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/param/continuous_connectivity.rviz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+<<<<<<< HEAD
+=======
+      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/launch/multirobot_4_office.launch" beforeDir="false" afterPath="$PROJECT_DIR$/launch/multirobot_4_office.launch" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/param/gvg_config.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/param/gvg_config.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/param/mapper.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/param/mapper.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/param/roscbt_config4.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/param/roscbt_config4.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/graph.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/graph.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/robot.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/robot.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/roscbt.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/roscbt.py" afterDir="false" />
+>>>>>>> 4882766ebd4f0983258db43f249f464d9e4ca176
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="IgnoredFileRootStore">
+    <option name="generatedRoots">
+      <set>
+        <option value="$PROJECT_DIR$/.idea" />
+      </set>
+    </option>
+  </component>
+  <component name="JupyterTrust" id="48c605e7-64c5-4c87-80ec-67b77d791915" />
+  <component name="ProjectId" id="1SwmE5zD0wZBwIW42kElmFeIFM1" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showExcludedFiles" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.path.for.package.eslint" value="project" />
+    <property name="node.js.path.for.package.tslint" value="project" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
+    <property name="settings.editor.selected.configurable" value="project.propVCSSupport.Mappings" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/msg" />
+      <recent name="$PROJECT_DIR$/param" />
+      <recent name="$PROJECT_DIR$/scripts" />
+      <recent name="$PROJECT_DIR$/world" />
+      <recent name="$PROJECT_DIR$/launch" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/localizer" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.graph">
+    <configuration name="graph" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="gvgexploration" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/scripts" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/graph.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="graph" type="ros_launch_run_config_type_id" factoryName="ROS Launch" temporary="true">
+      <method v="2" />
+    </configuration>
+    <configuration name="robot" type="ros_launch_run_config_type_id" factoryName="ROS Launch" temporary="true">
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.graph" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="ServiceViewManager">
+    <option name="viewStates">
+      <list>
+        <serviceView>
+          <treeState>
+            <expand />
+            <select />
+          </treeState>
+        </serviceView>
+      </list>
+    </option>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="1f78dcd9-7630-4a5b-b9cf-39028943040d" name="Default Changelist" comment="" />
+      <created>1572482917924</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1572482917924</updated>
+      <workItem from="1576683837117" duration="28000" />
+      <workItem from="1576688697775" duration="5406000" />
+      <workItem from="1576706494156" duration="899000" />
+      <workItem from="1576772213649" duration="55129000" />
+      <workItem from="1576941785453" duration="31000000" />
+      <workItem from="1576978766008" duration="69000" />
+      <workItem from="1578076516694" duration="756000" />
+      <workItem from="1578175956949" duration="188000" />
+      <workItem from="1578245661635" duration="618000" />
+      <workItem from="1578329225972" duration="2099000" />
+      <workItem from="1578408180379" duration="16000" />
+      <workItem from="1578411048036" duration="3066000" />
+      <workItem from="1578430680535" duration="27015000" />
+      <workItem from="1578581003943" duration="3624000" />
+      <workItem from="1578682843842" duration="2852000" />
+      <workItem from="1578690134204" duration="14507000" />
+      <workItem from="1578868197414" duration="23125000" />
+      <workItem from="1578973980521" duration="16000" />
+      <workItem from="1578974789443" duration="9657000" />
+      <workItem from="1579190099777" duration="1782000" />
+      <workItem from="1579221963523" duration="47000" />
+      <workItem from="1579283978119" duration="4020000" />
+      <workItem from="1579615568030" duration="4716000" />
+      <workItem from="1579631871874" duration="181000" />
+      <workItem from="1579657083633" duration="3120000" />
+      <workItem from="1579700596579" duration="2643000" />
+      <workItem from="1579705379807" duration="12068000" />
+      <workItem from="1579717939083" duration="12974000" />
+      <workItem from="1579739239823" duration="6513000" />
+      <workItem from="1579821999080" duration="6169000" />
+      <workItem from="1579884014083" duration="238000" />
+      <workItem from="1579887545099" duration="27978000" />
+      <workItem from="1580161046876" duration="25219000" />
+      <workItem from="1580314698432" duration="72000" />
+      <workItem from="1580318886969" duration="1212000" />
+      <workItem from="1580394405139" duration="161000" />
+      <workItem from="1580394619713" duration="10000" />
+      <workItem from="1580828846189" duration="36367000" />
+      <workItem from="1580927361828" duration="3888000" />
+      <workItem from="1581032019302" duration="124000" />
+      <workItem from="1581082537609" duration="4509000" />
+      <workItem from="1581091617883" duration="6331000" />
+      <workItem from="1581123136541" duration="2723000" />
+      <workItem from="1581196274889" duration="20000" />
+      <workItem from="1581286352740" duration="228000" />
+      <workItem from="1581287289578" duration="845000" />
+      <workItem from="1581288936623" duration="263000" />
+      <workItem from="1581293006118" duration="754000" />
+      <workItem from="1581294881254" duration="28000" />
+      <workItem from="1581517098359" duration="8000" />
+      <workItem from="1581517483790" duration="24000" />
+      <workItem from="1581525586116" duration="805000" />
+      <workItem from="1581529207567" duration="12000" />
+      <workItem from="1581530452098" duration="2056000" />
+      <workItem from="1581532968146" duration="144000" />
+      <workItem from="1581533239660" duration="910000" />
+      <workItem from="1581609859470" duration="535000" />
+      <workItem from="1581610650308" duration="1119000" />
+      <workItem from="1581622486019" duration="3216000" />
+      <workItem from="1581626052335" duration="445000" />
+      <workItem from="1581626561177" duration="535000" />
+      <workItem from="1581627117760" duration="171000" />
+      <workItem from="1582292165517" duration="10271000" />
+      <workItem from="1582303022024" duration="609000" />
+      <workItem from="1582330283536" duration="2316000" />
+      <workItem from="1582464180455" duration="1454000" />
+      <workItem from="1582481626134" duration="2921000" />
+      <workItem from="1582484574562" duration="2899000" />
+      <workItem from="1582488226837" duration="6215000" />
+      <workItem from="1582594027454" duration="19000" />
+      <workItem from="1582762370274" duration="7616000" />
+<<<<<<< HEAD
+      <workItem from="1582770097004" duration="1137000" />
+=======
+      <workItem from="1582770097004" duration="656000" />
+>>>>>>> 4882766ebd4f0983258db43f249f464d9e4ca176
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="1548" y="754" width="800" height="677" key="#Inspections" timestamp="1576368369009">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state x="1548" y="754" width="800" height="677" key="#Inspections/67.27.3773.2133@67.27.3773.2133" timestamp="1576368369009" />
+    <state x="1281" y="886" width="756" height="390" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1582483465108">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state x="1281" y="886" width="756" height="390" key="#com.intellij.fileTypes.FileTypeChooser/67.27.3773.2133@67.27.3773.2133" timestamp="1582483465108" />
+    <state x="1636" y="820" width="624" height="544" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog" timestamp="1576682280358">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state x="1636" y="820" width="624" height="544" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog/67.27.3773.2133@67.27.3773.2133" timestamp="1576682280358" />
+    <state x="887" y="480" width="424" height="484" key="FileChooserDialogImpl" timestamp="1582831763096">
+      <screen x="67" y="27" width="1853" height="1173" />
+    </state>
+    <state x="887" y="480" width="424" height="484" key="FileChooserDialogImpl/67.27.1853.1173@67.27.1853.1173" timestamp="1582831763096" />
+    <state x="1736" y="850" width="1395" height="1303" key="FileChooserDialogImpl/67.27.3773.2133@67.27.3773.2133" timestamp="1580933105710" />
+    <state width="3727" height="635" key="GridCell.Tab.0.bottom" timestamp="1579821964554">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state width="3727" height="635" key="GridCell.Tab.0.bottom/67.27.3773.2133@67.27.3773.2133" timestamp="1579821964554" />
+    <state width="3727" height="635" key="GridCell.Tab.0.center" timestamp="1579821964553">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state width="3727" height="635" key="GridCell.Tab.0.center/67.27.3773.2133@67.27.3773.2133" timestamp="1579821964553" />
+    <state width="3727" height="635" key="GridCell.Tab.0.left" timestamp="1579821964552">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state width="3727" height="635" key="GridCell.Tab.0.left/67.27.3773.2133@67.27.3773.2133" timestamp="1579821964552" />
+    <state width="3727" height="635" key="GridCell.Tab.0.right" timestamp="1579821964553">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state width="3727" height="635" key="GridCell.Tab.0.right/67.27.3773.2133@67.27.3773.2133" timestamp="1579821964553" />
+    <state x="1442" y="727" key="SettingsEditor" timestamp="1581626291763">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state x="1442" y="727" key="SettingsEditor/67.27.3773.2133@67.27.3773.2133" timestamp="1581626291763" />
+    <state x="167" y="125" width="3573" height="1935" key="com.intellij.history.integration.ui.views.DirectoryHistoryDialog" timestamp="1579705618088">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state x="167" y="125" width="3573" height="1935" key="com.intellij.history.integration.ui.views.DirectoryHistoryDialog/67.27.3773.2133@67.27.3773.2133" timestamp="1579705618088" />
+    <state x="1609" y="920" key="com.intellij.ide.util.TipDialog" timestamp="1582484595381">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state x="1609" y="920" key="com.intellij.ide.util.TipDialog/67.27.3773.2133@67.27.3773.2133" timestamp="1582484595381" />
+  </component>
+</project>

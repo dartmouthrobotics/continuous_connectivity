@@ -1,0 +1,34 @@
+<!-- Robot nodes. -->
+<launch>
+    <arg name="robot_name"/>
+    <arg name="robot_type"/>
+    <arg name="base_stations" default=''/>
+    <arg name="frontier_robots" default=''/>
+    <arg name="relay_robots" default=''/>
+    <arg name="map_width" default=''/>
+    <arg name="map_height" default=''/>
+    <arg name="run" default="0"/>
+    <group ns="$(arg robot_name)">
+        <node pkg="continuous_connectivity" type="robot.py" name="node$(arg robot_name)" >
+            <rosparam file="$(find gvgexploration)/param/gvg_config.yaml"/>
+            <param name="robot_id" value="$(arg robot_name)"/>
+            <param name="robot_type" value="$(arg robot_type)"/>
+            <param name="base_stations" value="$(arg base_stations)"/>
+            <param name="frontier_robots" value="$(arg frontier_robots)"/>
+            <param name="relay_robots" value="$(arg relay_robots)"/>
+            <param name="map_height" value="$(arg map_height)"/>
+            <param name="run" value="$(arg run)"/>
+        </node>
+        <node pkg="gvgexploration" type="graph.py" name="node$(arg robot_name)_graph_processor" >
+            <param name="robot_id" value="$(arg robot_name)"/>
+            <param name="robot_type" value="$(arg robot_type)"/>
+            <param name="base_stations" value="$(arg base_stations)"/>
+            <param name="frontier_robots" value="$(arg frontier_robots)"/>
+            <param name="relay_robots" value="$(arg relay_robots)"/>
+            <param name="map_width" value="$(arg map_width)"/>
+            <param name="map_height" value="$(arg map_height)"/>
+            <param name="run" value="$(arg run)"/>
+            <rosparam file="$(find gvgexploration)/param/gvg_config.yaml"/>
+        </node>
+    </group>
+</launch>
