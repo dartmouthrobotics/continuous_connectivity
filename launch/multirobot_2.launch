@@ -25,7 +25,7 @@
         <node name="GetMap" pkg="nav2d_navigator" type="get_map_client" />
         <node name="SetGoal" pkg="nav2d_navigator" type="set_goal_client" />
         <node name="scan_filter" pkg="gvgexploration" type="scan_filter.py">
-            <param name="robot_id" value="2" />
+            <param name="robot_id" value="0" />
             <rosparam file="$(find gvgexploration)/param/gvg_config.yaml"/>
         </node>
         <include file="$(find continuous_connectivity)/launch/robot.launch">
@@ -53,7 +53,7 @@
         <node name="GetMap" pkg="nav2d_navigator" type="get_map_client" />
         <node name="SetGoal" pkg="nav2d_navigator" type="set_goal_client" />
         <node name="scan_filter" pkg="gvgexploration" type="scan_filter.py">
-            <param name="robot_id" value="2" />
+            <param name="robot_id" value="1" />
             <rosparam file="$(find gvgexploration)/param/gvg_config.yaml"/>
         </node>
         <include file="$(find continuous_connectivity)/launch/robot.launch">
