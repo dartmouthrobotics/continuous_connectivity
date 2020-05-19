@@ -29,7 +29,7 @@
         </node>
         <node name="scan_filter" pkg="gvgexploration" type="scan_filter.py">
             <param name="robot_id" value="0" />
-            <rosparam file="$(find gvgexploration)/param/gvg_config.yaml"/>
+            <rosparam command="load" file="$(find gvgexploration)/param/gvg_config.yaml" subst_value="true"/>
         </node>
         <node pkg="nav2d_navigator" type="explore_client" name="explore_client"/>
         <node name="GetMap" pkg="nav2d_navigator" type="get_map_client" />
@@ -58,7 +58,7 @@
         </node>
         <node name="scan_filter" pkg="gvgexploration" type="scan_filter.py">
             <param name="robot_id" value="1" />
-            <rosparam file="$(find gvgexploration)/param/gvg_config.yaml"/>
+            <rosparam command="load" file="$(find gvgexploration)/param/gvg_config.yaml" subst_value="true"/>
         </node>
         <node pkg="nav2d_navigator" type="explore_client" name="explore_client"/>
         <node name="GetMap" pkg="nav2d_navigator" type="get_map_client" />
@@ -87,7 +87,7 @@
         </node>
         <node name="scan_filter" pkg="gvgexploration" type="scan_filter.py">
             <param name="robot_id" value="2" />
-            <rosparam file="$(find gvgexploration)/param/gvg_config.yaml"/>
+            <rosparam command="load" file="$(find gvgexploration)/param/gvg_config.yaml" subst_value="true"/>
         </node>
         <node pkg="nav2d_navigator" type="explore_client" name="explore_client"/>
         <node name="GetMap" pkg="nav2d_navigator" type="get_map_client" />
@@ -115,7 +115,7 @@
         </node>
         <node name="scan_filter" pkg="gvgexploration" type="scan_filter.py">
             <param name="robot_id" value="3" />
-            <rosparam file="$(find gvgexploration)/param/gvg_config.yaml"/>
+            <rosparam command="load" file="$(find gvgexploration)/param/gvg_config.yaml" subst_value="true"/>
         </node>
         <node pkg="nav2d_navigator" type="explore_client" name="explore_client"/>
         <node name="GetMap" pkg="nav2d_navigator" type="get_map_client" />
@@ -143,7 +143,7 @@
         </node>
         <node name="scan_filter" pkg="gvgexploration" type="scan_filter.py">
             <param name="robot_id" value="4" />
-            <rosparam file="$(find gvgexploration)/param/gvg_config.yaml"/>
+            <rosparam command="load" file="$(find gvgexploration)/param/gvg_config.yaml" subst_value="true"/>
         </node>
         <node pkg="nav2d_navigator" type="explore_client" name="explore_client"/>
         <node name="GetMap" pkg="nav2d_navigator" type="get_map_client" />
@@ -171,7 +171,7 @@
         </node>
         <node name="scan_filter" pkg="gvgexploration" type="scan_filter.py">
             <param name="robot_id" value="5" />
-            <rosparam file="$(find gvgexploration)/param/gvg_config.yaml"/>
+            <rosparam command="load" file="$(find gvgexploration)/param/gvg_config.yaml" subst_value="true"/>
         </node>
         <node pkg="nav2d_navigator" type="explore_client" name="explore_client"/>
         <node name="GetMap" pkg="nav2d_navigator" type="get_map_client" />
@@ -198,7 +198,7 @@
         </node>
         <node name="scan_filter" pkg="gvgexploration" type="scan_filter.py">
             <param name="robot_id" value="6" />
-            <rosparam file="$(find gvgexploration)/param/gvg_config.yaml"/>
+            <rosparam command="load" file="$(find gvgexploration)/param/gvg_config.yaml" subst_value="true"/>
         </node>
         <node pkg="nav2d_navigator" type="explore_client" name="explore_client"/>
         <node name="GetMap" pkg="nav2d_navigator" type="get_map_client" />
@@ -225,7 +225,7 @@
         </node>
         <node name="scan_filter" pkg="gvgexploration" type="scan_filter.py">
             <param name="robot_id" value="7" />
-            <rosparam file="$(find gvgexploration)/param/gvg_config.yaml"/>
+            <rosparam command="load" file="$(find gvgexploration)/param/gvg_config.yaml" subst_value="true"/>
         </node>
         <node pkg="nav2d_navigator" type="explore_client" name="explore_client"/>
         <node name="GetMap" pkg="nav2d_navigator" type="get_map_client" />
@@ -237,7 +237,7 @@
         </include>
     </group>
       <node pkg="gvgexploration" type="map_analyzer.py" name="map_analyzer">
-        <rosparam file="$(find gvgexploration)/param/gvg_config.yaml"/>
+        <rosparam command="load" file="$(find gvgexploration)/param/gvg_config.yaml" subst_value="true"/>
     </node>
 
     <!-- RVIZ to view the visualization -->
