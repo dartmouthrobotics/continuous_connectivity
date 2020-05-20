@@ -62,7 +62,7 @@
             <arg name="base_stations" value="0" />
         </include>
     </group>
-    <node pkg="continuous_connectivity" type="map_analyzer.py" name="map_analyzer">
+    <node pkg="gvgexploration" type="map_analyzer.py" name="map_analyzer">
         <rosparam command="load" file="$(find gvgexploration)/param/gvg_config.yaml" subst_value="true"/>
     </node>
     <node name="RVIZ" pkg="rviz" type="rviz" args=" -d $(find gvgexploration)/param/continuous_connectivity.rviz" output="screen" />

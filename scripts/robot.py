@@ -274,7 +274,7 @@ class Robot:
         self.data_size_pub.publish(data_size)
 
     def get_data_size(self, buff_data):
-        data_size = len(buff_data)#sys.getsizeof(buff_data)
+        data_size = len(buff_data)  # sys.getsizeof(buff_data)
         return data_size
 
     def wait_for_map_update(self):
@@ -437,6 +437,7 @@ class Robot:
                     new_point = [0.0] * 2
                     new_point[pu.INDEX_FOR_X] = ridge.nodes[1].position.x
                     new_point[pu.INDEX_FOR_Y] = ridge.nodes[1].position.y
+                    new_point = pu.scale_down(new_point)
                     self.frontier_point = new_point
                 if self.frontier_point:
                     self.start_exploration_action(self.frontier_point)
@@ -484,6 +485,7 @@ class Robot:
         new_point = [0.0] * 2
         new_point[pu.INDEX_FOR_X] = self.frontier_ridge.nodes[1].position.x
         new_point[pu.INDEX_FOR_Y] = self.frontier_ridge.nodes[1].position.y
+        new_point = pu.scale_down(new_point)
         self.frontier_point = new_point
         robot_pose = self.get_robot_pose()
         self.frontier_data.append(
@@ -504,6 +506,7 @@ class Robot:
         received_points = []
         distances = []
         robot_pose = self.get_robot_pose()
+        robot_pose = pu.scale_up(robot_pose)
         for p in poses:
             received_points.append(p)
             point = (p.position.x, p.position.y,
@@ -660,16 +663,16 @@ class Robot:
                 self.exploration_id = gid
                 status = goal_status.status
                 if status == ABORTED:
-                    pu.log_msg(self.robot_id,"Robot stopped share data..",self.debug_mode)
+                    pu.log_msg(self.robot_id, "Robot stopped share data..", self.debug_mode)
 
     def cancel_exploration(self):
         if self.exploration_id:
-            pu.log_msg(self.robot_id,"Cancelling exploration...",self.debug_mode)
+            pu.log_msg(self.robot_id, "Cancelling exploration...", self.debug_mode)
             goal_id = GoalID()
             goal_id.id = self.exploration_id
             self.cancel_explore_pub.publish(goal_id)
         else:
-            pu.log_msg(self.robot_id,"Exploration ID not set...",self.debug_mode)
+            pu.log_msg(self.robot_id, "Exploration ID not set...", self.debug_mode)
 
     def add_to_file(self, rid, data):
         # self.lock.acquire()
@@ -685,7 +688,6 @@ class Robot:
         if rid in self.karto_messages:
             message_data = self.karto_messages[rid]
         return message_data
-
 
     def delete_data_for_id(self, rid):
         self.lock.acquire()
