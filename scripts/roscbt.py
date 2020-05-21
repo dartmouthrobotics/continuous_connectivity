@@ -316,7 +316,7 @@ class roscbt:
 
     def shutdown_callback(self, msg):
         self.save_all_data()
-        rospy.signal_shutdown('ROSCBT: Shutdown command received!')
+        rospy.signal_('ROSCBT: Shutdown command received!')
 
     def save_all_data(self):
         save_data(self.exploration_data,
@@ -325,6 +325,7 @@ class roscbt:
         save_data(self.shared_data_size,
                   'continuous/roscbt_data_shared_{}_{}_{}_{}.pickle'.format(self.environment, self.robot_count,
                                                                             self.run, self.termination_metric))
+
 
 
 if __name__ == '__main__':
