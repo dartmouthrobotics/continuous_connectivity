@@ -201,19 +201,22 @@ class Robot:
         while not rospy.is_shutdown():
             if self.is_exploring:
                 close_devices = self.get_close_devices()
-                received_data = {}
-                for rid in close_devices:
-                    rid_data = self.create_buff_data(rid)
-                    if rid_data:
-                        pu.log_msg(self.robot_id, "Sharing data with: {}".format(rid), self.debug_mode)
-                        new_data = self.shared_data_srv_map[rid](SharedDataRequest(req_data=rid_data))
-                        received_data[rid] = new_data.res_data
-                        data_size = self.get_data_size(new_data.res_data.data) + self.get_data_size(rid_data.data)
-                        self.report_shared_data(data_size)
-                        self.delete_data_for_id(rid)
-                    else:
-                        pu.log_msg(self.robot_id, "No data to share with: {}".format(rid), self.debug_mode)
-                self.process_received_data(received_data)
+                if close_devices:
+                    received_data = {}
+                    data_size = 0
+                    for rid in close_devices:
+                        rid_data = self.create_buff_data(rid)
+                        if rid_data:
+                            pu.log_msg(self.robot_id, "Sharing data with: {}".format(rid), self.debug_mode)
+                            new_data = self.shared_data_srv_map[rid](SharedDataRequest(req_data=rid_data))
+                            received_data[rid] = new_data.res_data
+                            data_size += self.get_data_size(rid_data.data)
+                            data_size += self.get_data_size(new_data.res_data.data)
+                            self.delete_data_for_id(rid)
+                        else:
+                            pu.log_msg(self.robot_id, "No data to share with: {}".format(rid), self.debug_mode)
+                    self.report_shared_data(data_size)
+                    self.process_received_data(received_data)
             r.sleep()
 
     def process_received_data(self, received_data):
@@ -299,7 +302,7 @@ class Robot:
     def robots_karto_out_callback(self, data):
         if data.robot_id - 1 == self.robot_id:
             for rid in self.candidate_robots:
-                self.add_to_file(rid, [data])
+                self.add_to_file(rid, data)
             if self.is_initial_data_sharing:
                 self.push_messages_to_receiver(self.candidate_robots)
                 self.previous_pose = self.get_robot_pose()
@@ -565,11 +568,12 @@ class Robot:
         self.last_map_update_time = rospy.Time.now().to_sec()
         counter = 0
         for scan in data_vals:
+            sid = str(scan.robot_id - 1)
             self.karto_pub.publish(scan)
+            for rid in self.candidate_robots:
+                if rid != sid:
+                    self.add_to_file(rid, scan)
             counter += 1
-        for rid in self.candidate_robots:
-            if rid != sender_id:
-                self.add_to_file(rid, data_vals)
 
     def push_messages_to_receiver(self, receiver_ids, is_alert=0):
         for rid in receiver_ids:
@@ -677,9 +681,9 @@ class Robot:
     def add_to_file(self, rid, data):
         # self.lock.acquire()
         if rid in self.karto_messages:
-            self.karto_messages[rid] += data
+            self.karto_messages[rid].append(data)
         else:
-            self.karto_messages[rid] = data
+            self.karto_messages[rid] = [data]
         # self.lock.release()
         return True
 
