@@ -106,12 +106,14 @@ class Robot:
         self.termination_metric = rospy.get_param("~termination_metric")
         self.robot_count = rospy.get_param("~robot_count")
         self.environment = rospy.get_param("~environment")
+        self.graph_scale = rospy.get_param("~graph_scale")
         self.termination_metric = rospy.get_param("~termination_metric")
         self.max_exploration_time = rospy.get_param("~max_exploration_time")
         self.max_coverage = rospy.get_param("~max_coverage")
         self.max_common_coverage = rospy.get_param("~max_common_coverage")
         self.target_distance = rospy.get_param('~target_distance')
         self.target_angle = rospy.get_param('~target_angle')
+        self.share_limit = rospy.get_param('~data_share_threshold')
         self.rate = rospy.Rate(0.1)
         self.min_hallway_width = rospy.get_param("~min_hallway_width".format(self.robot_id))
         self.comm_range = rospy.get_param("~comm_range".format(self.robot_id))
@@ -205,16 +207,16 @@ class Robot:
                     received_data = {}
                     data_size = 0
                     for rid in close_devices:
-                        rid_data = self.create_buff_data(rid)
-                        if rid_data:
+                        if len(self.load_data_for_id(rid)) > self.share_limit:
+                            rid_data = self.create_buff_data(rid)
                             pu.log_msg(self.robot_id, "Sharing data with: {}".format(rid), self.debug_mode)
                             new_data = self.shared_data_srv_map[rid](SharedDataRequest(req_data=rid_data))
                             received_data[rid] = new_data.res_data
                             data_size += self.get_data_size(rid_data.data)
                             data_size += self.get_data_size(new_data.res_data.data)
                             self.delete_data_for_id(rid)
-                        else:
-                            pu.log_msg(self.robot_id, "No data to share with: {}".format(rid), self.debug_mode)
+                        # else:
+                        #     pu.log_msg(self.robot_id, "No data to share with: {}".format(rid), self.debug_mode)
                     self.report_shared_data(data_size)
                     self.process_received_data(received_data)
             r.sleep()
@@ -440,7 +442,7 @@ class Robot:
                     new_point = [0.0] * 2
                     new_point[pu.INDEX_FOR_X] = ridge.nodes[1].position.x
                     new_point[pu.INDEX_FOR_Y] = ridge.nodes[1].position.y
-                    new_point = pu.scale_down(new_point)
+                    new_point = pu.scale_down(new_point, self.graph_scale)
                     self.frontier_point = new_point
                 if self.frontier_point:
                     self.start_exploration_action(self.frontier_point)
@@ -488,7 +490,7 @@ class Robot:
         new_point = [0.0] * 2
         new_point[pu.INDEX_FOR_X] = self.frontier_ridge.nodes[1].position.x
         new_point[pu.INDEX_FOR_Y] = self.frontier_ridge.nodes[1].position.y
-        new_point = pu.scale_down(new_point)
+        new_point = pu.scale_down(new_point, self.graph_scale)
         self.frontier_point = new_point
         robot_pose = self.get_robot_pose()
         self.frontier_data.append(
@@ -509,7 +511,7 @@ class Robot:
         received_points = []
         distances = []
         robot_pose = self.get_robot_pose()
-        robot_pose = pu.scale_up(robot_pose)
+        robot_pose = pu.scale_up(robot_pose, self.graph_scale)
         for p in poses:
             received_points.append(p)
             point = (p.position.x, p.position.y,
