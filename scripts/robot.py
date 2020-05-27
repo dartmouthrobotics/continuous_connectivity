@@ -203,7 +203,10 @@ class Robot:
         r = rospy.Rate(0.1)
         while not rospy.is_shutdown():
             if self.is_exploring:
-                self.exchange_data()
+                try:
+                    self.exchange_data()
+                except Exception as e:
+                    pu.log_msg(self.robot_id,"Error in data sharing: {}".format(e),self.debug_mode)
             r.sleep()
 
     def exchange_data(self):
