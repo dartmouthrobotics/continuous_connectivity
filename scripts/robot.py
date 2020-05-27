@@ -99,6 +99,7 @@ class Robot:
         self.shared_data_srv_map = {}
         self.shared_point_srv_map = {}
         self.allocation_srv_map = {}
+        self.is_active=False
 
         self.exploration_time = rospy.Time.now().to_sec()
         self.candidate_robots = self.frontier_robots + self.base_stations
@@ -201,30 +202,35 @@ class Robot:
     def spin(self):
         r = rospy.Rate(0.1)
         while not rospy.is_shutdown():
-            # try:
             if self.is_exploring:
-                close_devices = self.get_close_devices()
-                if close_devices:
-                    received_data = {}
-                    data_size = 0
-                    for rid in close_devices:
-                        size = len(self.load_data_for_id(rid))
-                        if size > self.share_limit:
-                            rid_data = self.create_buff_data(str(rid))
-                            pu.log_msg(self.robot_id, "Sharing data with: {}".format(rid), self.debug_mode)
-                            pu.log_msg(self.robot_id, "Sharing data size: {}".format(size), self.debug_mode)
-                            new_data = self.shared_data_srv_map[rid](SharedDataRequest(req_data=rid_data))
-                            received_data[rid] = new_data.res_data
-                            data_size += size
-                            data_size += self.get_data_size(new_data.res_data.data)
-                            self.delete_data_for_id(rid)
-                        # else:
-                        #     pu.log_msg(self.robot_id, "No data to share with: {}".format(rid), self.debug_mode)
-                    self.report_shared_data(data_size)
-                    self.process_received_data(received_data)
-            # except  Exception as e:
-            #     pu.log_msg(self.robot_id, "Error: {}".format(e), self.debug_mode)
+                try:
+                    self.exchange_data()
+                except Exception as e:
+                    pu.log_msg(self.robot_id,"Error in data sharing: {}".format(e),self.debug_mode)
             r.sleep()
+
+    def exchange_data(self):
+        if self.is_active:
+            return
+        self.is_active = True
+        close_devices = self.get_close_devices()
+        if close_devices:
+            received_data = {}
+            data_size = 0
+            for rid in close_devices:
+                if len(self.load_data_for_id(rid)) > self.share_limit:
+                    rid_data = self.create_buff_data(rid)
+                    pu.log_msg(self.robot_id, "Sharing data with: {}".format(rid), self.debug_mode)
+                    new_data = self.shared_data_srv_map[rid](SharedDataRequest(req_data=rid_data))
+                    received_data[rid] = new_data.res_data
+                    data_size += self.get_data_size(rid_data.data)
+                    data_size += self.get_data_size(new_data.res_data.data)
+                    self.delete_data_for_id(rid)
+                # else:
+                #     pu.log_msg(self.robot_id, "No data to share with: {}".format(rid), self.debug_mode)
+            self.report_shared_data(data_size)
+            self.process_received_data(received_data)
+        self.is_active = False
 
     def process_received_data(self, received_data):
         for rid, buff_data in received_data.items():
@@ -242,9 +248,9 @@ class Robot:
         return set(devices)
 
     def create_buff_data(self, rid, is_alert=0):
-        buffered_data = BufferedData()
         message_data = self.load_data_for_id(rid)
         pu.log_msg(self.robot_id, "Contains message data", self.debug_mode)
+        buffered_data = BufferedData()
         buffered_data.msg_header.header.stamp = rospy.Time.now()
         buffered_data.msg_header.header.frame_id = '{}'.format(self.robot_id)
         buffered_data.msg_header.sender_id = str(self.robot_id)
