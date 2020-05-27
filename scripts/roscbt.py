@@ -130,8 +130,6 @@ class roscbt:
             exec("setattr(roscbt, 'callback_pos_teammate{0}', a_{0})".format(i))
             exec("rospy.Subscriber('/robot_{0}/base_pose_ground_truth', Odometry, self.callback_pos_teammate{0}, "
                  "queue_size = 100)".format(i))
-
-            # self.listener = tf.TransformListener()
         self.shared_data_size = []
         rospy.Subscriber('/shared_data_size', DataSize, self.shared_data_callback)
         rospy.Subscriber('/shutdown', String, self.shutdown_callback)

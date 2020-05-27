@@ -1,6 +1,6 @@
 <launch>
     <param name="use_sim_time" value="true" />
-    <node name="Stage" pkg="stage_ros" type="stageros" args="$(find gvgexploration)/world/city4_1.world">
+    <node name="Stage" pkg="stage_ros" type="stageros" args="$(find gvgexploration)/world/city4.world">
         <param name="base_watchdog_timeout" value="0" />
     </node>
     <node name="R0_MapAlign" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /map /robot_0/map 100"/>
@@ -123,7 +123,7 @@
     </group>
 
     <node name="roscbt" pkg="gvgexploration" type="roscbt.py" respawn="true">
-        <rosparam file="$(find continuous_connectivity)/param/roscbt_config4.yaml"/>
+        <rosparam file="$(find gvgexploration)/param/roscbt_config4.yaml"/>
         <rosparam file="$(find gvgexploration)/param/gvg_config.yaml"/>
     </node>
 
