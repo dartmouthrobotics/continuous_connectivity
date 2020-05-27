@@ -9,7 +9,7 @@ from sensor_msgs.msg import *
 from geometry_msgs.msg import *
 import math
 from gvgexploration.msg import *
-from nav2d_navigator.msg import MoveToPosition2DActionGoal, MoveToPosition2DActionResult
+from nav2d_navigator.msg import MoveToPosition2DActionGoal, MoveToPosition2DActionResult, ExploreActionResult
 from actionlib_msgs.msg import GoalStatusArray, GoalID
 from std_srvs.srv import Trigger
 import numpy as np
@@ -40,6 +40,7 @@ SUCCEEDED = 3  # The goal was achieved successfully by the action server (Termin
 ABORTED = 4  # The goal was aborted during execution by the action server due to some failure (Terminal State)
 LOST = 9  # An action client can determine that a goal is LOST. This should not be sent over the wire by an action
 TURNING_ANGLE = np.deg2rad(45)
+BUFFER_SIZE = 65536
 
 
 class Robot:
@@ -99,7 +100,9 @@ class Robot:
         self.shared_data_srv_map = {}
         self.shared_point_srv_map = {}
         self.allocation_srv_map = {}
+        self.conn_manager = {}
         self.is_active = False
+        self.global_robot_pose = None
 
         self.exploration_time = rospy.Time.now().to_sec()
         self.candidate_robots = self.frontier_robots + self.base_stations
@@ -121,11 +124,12 @@ class Robot:
         self.point_precision = rospy.get_param("~point_precision".format(self.robot_id))
         self.min_edge_length = rospy.get_param("~min_edge_length".format(self.robot_id))
 
-        rospy.Service("/robot_{}/shared_data".format(self.robot_id), SharedData, self.shared_data_handler)
+        rospy.Service("/robot_{}/shared_data".format(self.robot_id), SharedData, self.shared_data_handler,
+                      buff_size=BUFFER_SIZE)
         self.auction_points_srv = rospy.Service("/robot_{}/auction_points".format(self.robot_id), SharedPoint,
-                                                self.shared_point_handler)
+                                                self.shared_point_handler, buff_size=BUFFER_SIZE)
         self.alloc_point_srv = rospy.Service("/robot_{}/allocated_point".format(self.robot_id), SharedFrontier,
-                                             self.shared_frontier_handler)
+                                             self.shared_frontier_handler, buff_size=BUFFER_SIZE)
         rospy.Subscriber('/robot_{}/initial_data'.format(self.robot_id), BufferedData, self.buffered_data_callback,
                          queue_size=1000)
         self.signal_strength_srv = rospy.ServiceProxy("/signal_strength".format(self.robot_id), HotSpot)
@@ -133,21 +137,21 @@ class Robot:
         rospy.logerr("Robot {}, Candidates: {}".format(self.robot_id, self.candidate_robots))
         for ri in self.candidate_robots:
             pub = rospy.Publisher("/roscbt/robot_{}/initial_data".format(ri), BufferedData, queue_size=1000)
-            data_srv = rospy.ServiceProxy("/robot_{}/received_data".format(ri), SharedData)
-            received_data_clt = rospy.ServiceProxy("/robot_{}/shared_data".format(ri), SharedData)
-            action_points_clt = rospy.ServiceProxy("/robot_{}/auction_points".format(ri), SharedPoint)
-            alloc_point_clt = rospy.ServiceProxy("/robot_{}/allocated_point".format(ri), SharedFrontier)
+            data_srv = rospy.ServiceProxy("/robot_{}/received_data".format(ri), SharedData, persistent=True)
+            received_data_clt = rospy.ServiceProxy("/robot_{}/shared_data".format(ri), SharedData, persistent=True)
+            action_points_clt = rospy.ServiceProxy("/robot_{}/auction_points".format(ri), SharedPoint, persistent=True)
+            alloc_point_clt = rospy.ServiceProxy("/robot_{}/allocated_point".format(ri), SharedFrontier,
+                                                 persistent=True)
             self.publisher_map[ri] = pub
             self.service_map[ri] = data_srv
             self.shared_data_srv_map[ri] = received_data_clt
             self.shared_point_srv_map[ri] = action_points_clt
             self.allocation_srv_map[ri] = alloc_point_clt
+            self.conn_manager[ri] = rospy.Time.now().to_sec()
 
         self.karto_pub = rospy.Publisher("/robot_{}/karto_in".format(self.robot_id), LocalizedScan, queue_size=1000)
         self.chose_point_pub = rospy.Publisher("/chosen_point", ChosenPoint, queue_size=1000)
         self.auction_point_pub = rospy.Publisher("/auction_point", ChosenPoint, queue_size=1000)
-        self.start_exploration_pub = rospy.Publisher("/robot_{}/start_exploration".format(self.robot_id), String,
-                                                     queue_size=10)
         self.moveTo_pub = rospy.Publisher("/robot_{}/MoveTo/goal".format(self.robot_id), MoveToPosition2DActionGoal,
                                           queue_size=10)
         self.chose_point_pub = rospy.Publisher("/chosen_point", ChosenPoint, queue_size=1000)
@@ -163,6 +167,8 @@ class Robot:
         rospy.Subscriber("/robot_{}/MoveTo/result".format(self.robot_id), MoveToPosition2DActionResult,
                          self.move_result_callback)
         rospy.Subscriber('/robot_{}/Explore/status'.format(self.robot_id), GoalStatusArray, self.exploration_callback)
+        rospy.Subscriber('/robot_{}/Explore/result'.format(self.robot_id), ExploreActionResult,
+                         self.exploration_result_callback)
         rospy.Subscriber("/robot_{}/navigator/plan".format(self.robot_id), GridCells, self.navigation_plan_callback)
         rospy.Subscriber('/karto_out'.format(self.robot_id), LocalizedScan, self.robots_karto_out_callback,
                          queue_size=1000)
@@ -200,17 +206,25 @@ class Robot:
         rospy.loginfo("Robot {} Initialized successfully!!".format(self.robot_id))
 
     def spin(self):
-        r = rospy.Rate(0.1)
+        r = rospy.Rate(0.05)
         while not rospy.is_shutdown():
             if self.is_exploring:
-                try:
-                    if not self.is_active:
-                        self.is_active = True
-                        self.exchange_data()
-                        self.is_active = False
-                except Exception as e:
-                    pu.log_msg(self.robot_id, "Error: {}".format(e), self.debug_mode)
+                # try:
+                if not self.is_active:
+                    self.is_active = True
+                    self.exchange_data()
+                    self.is_active = False
+                # except Exception as e:
+                #     pu.log_msg(self.robot_id, "Error: {}".format(e), self.debug_mode)
             r.sleep()
+
+    def is_time_to_share(self, rid):
+        now = rospy.Time.now().to_sec()
+        diff = now - self.conn_manager[rid]
+        return diff > self.share_limit
+
+    def update_share_time(self, rid):
+        self.conn_manager[rid] = rospy.Time.now().to_sec()
 
     def exchange_data(self):
         close_devices = self.get_close_devices()
@@ -218,27 +232,35 @@ class Robot:
             received_data = {}
             data_size = 0
             for rid in close_devices:
-                if len(self.load_data_for_id(rid)) > self.share_limit:
+                sender_id = str(rid)
+                if self.is_time_to_share(sender_id):
+                    rid_data = self.create_buff_data(sender_id)
+                    new_data = None
                     try:
-                        rid_data = self.create_buff_data(rid)
-                        pu.log_msg(self.robot_id, "Sharing data with: {}".format(rid), self.debug_mode)
-                        new_data = self.shared_data_srv_map[rid](SharedDataRequest(req_data=rid_data))
-                        received_data[rid] = new_data.res_data
-                        data_size += self.get_data_size(rid_data.data)
-                        data_size += self.get_data_size(new_data.res_data.data)
-                        self.delete_data_for_id(rid)
-                    except Exception as e:
-                        pu.log_msg(self.robot_id, "Error in data sharing: {}".format(e), self.debug_mode)
+                        new_data = self.shared_data_srv_map[sender_id](SharedDataRequest(req_data=rid_data))
+                    except:
                         pass
-                # else:
-                #     pu.log_msg(self.robot_id, "No data to share with: {}".format(rid), self.debug_mode)
+                    self.update_share_time(sender_id)
+                    if new_data:
+                        received_data[sender_id] = new_data.res_data
+                        data_size += self.get_data_size(new_data.res_data.data)
+                    data_size += self.get_data_size(rid_data.data)
+                    pu.log_msg(self.robot_id, "Shared data with: {}".format(sender_id), self.debug_mode)
+                    self.delete_data_for_id(sender_id)
+                    # except Exception as e:
+                    #     pu.log_msg(self.robot_id, "Error in data sharing: {}".format(e), self.debug_mode)
+                else:
+                    pu.log_msg(self.robot_id, "Cant share with {} now. Last shared: {} secs ago".format(sender_id,
+                        rospy.Time.now().to_sec() - self.conn_manager[sender_id]), self.debug_mode)
             if data_size:
                 self.report_shared_data(data_size)
                 self.process_received_data(received_data)
 
     def process_received_data(self, received_data):
         for rid, buff_data in received_data.items():
-            self.process_data(rid, buff_data)
+            thread = Thread(target=self.process_data, args=(rid, buff_data,))
+            thread.start()
+            # self.process_data(rid, buff_data)
 
     def get_close_devices(self):
         ss_data = self.signal_strength_srv(HotSpotRequest(robot_id=str(self.robot_id)))
@@ -262,11 +284,18 @@ class Robot:
         buffered_data.msg_header.topic = 'received_data'
         buffered_data.secs = []
         buffered_data.data = message_data
+
         buffered_data.alert_flag = is_alert
         return buffered_data
 
     def coverage_callback(self, data):
         self.coverage = data
+
+    def exploration_result_callback(self, data):
+        s = data.status.status
+        pu.log_msg(self.robot_id, "Exploration status: {}".format(s), self.debug_mode)
+        if s == ABORTED:
+            self.initiate_exploration()
 
     def evaluate_exploration(self):
         its_time = False
@@ -317,7 +346,7 @@ class Robot:
     def robots_karto_out_callback(self, data):
         if data.robot_id - 1 == self.robot_id:
             for rid in self.candidate_robots:
-                self.add_to_file(rid, data)
+                self.add_to_file(rid, [data])
             if self.is_initial_data_sharing:
                 self.push_messages_to_receiver(self.candidate_robots)
                 self.previous_pose = self.get_robot_pose()
@@ -385,8 +414,10 @@ class Robot:
         pu.log_msg(self.robot_id, "Received request from robot..", self.debug_mode)
         received_buff_data = data.req_data
         sender_id = received_buff_data.msg_header.header.frame_id
-        self.process_data(sender_id, received_buff_data)
+        self.update_share_time(sender_id)
         buff_data = self.create_buff_data(sender_id, is_alert=0)
+        thread = Thread(target=self.process_data, args=(sender_id, received_buff_data,))
+        thread.start()
         return SharedDataResponse(poses=[], res_data=buff_data)
 
     def compute_and_share_auction_points(self, auction_feedback, frontier_points):
@@ -580,16 +611,22 @@ class Robot:
         self.close_devices = devices
 
     def process_data(self, sender_id, buff_data):
-        data_vals = buff_data.data
-        self.last_map_update_time = rospy.Time.now().to_sec()
-        counter = 0
-        for scan in data_vals:
-            sid = str(scan.robot_id - 1)
-            self.karto_pub.publish(scan)
+        self.lock.acquire()
+        try:
+            data_vals = buff_data.data
+            self.last_map_update_time = rospy.Time.now().to_sec()
+            counter = 0
+
+            for scan in data_vals:
+                self.karto_pub.publish(scan)
+                counter += 1
+
             for rid in self.candidate_robots:
-                if rid != sid:
-                    self.add_to_file(rid, scan)
-            counter += 1
+                if rid != sender_id:
+                    self.add_to_file(rid, data_vals)
+        except Exception as e:
+            pu.log_msg(self.robot_id, "Error processing data: {}".format(e))
+        self.lock.release()
 
     def push_messages_to_receiver(self, receiver_ids, is_alert=0):
         for rid in receiver_ids:
@@ -611,7 +648,8 @@ class Robot:
         if sender_id in self.candidate_robots:
             if self.initial_receipt:
                 self.push_messages_to_receiver([sender_id])
-                self.process_data(sender_id, buff_data)
+                thread = Thread(target=self.process_data, args=(sender_id, buff_data,))
+                thread.start()
                 pu.log_msg(self.robot_id, "Initial data from {}: {} files".format(sender_id, len(buff_data.data)),
                            self.debug_mode)
                 self.initial_data_count += 1
@@ -659,6 +697,7 @@ class Robot:
 
     def get_robot_pose(self):
         robot_pose = None
+        count = 0
         while not robot_pose:
             try:
                 self.listener.waitForTransform("robot_{}/map".format(self.robot_id),
@@ -668,12 +707,16 @@ class Robot:
                                                                      "robot_{}/base_link".format(self.robot_id),
                                                                      rospy.Time(0))
                 robot_pose = (math.floor(robot_loc_val[0]), math.floor(robot_loc_val[1]), robot_loc_val[2])
+                self.global_robot_pose = robot_pose
+                count += 1
                 sleep(1)
             except:
                 # rospy.logerr("Robot {}: Can't fetch robot pose from tf".format(self.robot_id))
+                if count > 5:
+                    break
                 pass
 
-        return robot_pose
+        return self.global_robot_pose
 
     def exploration_callback(self, data):
         if data.status_list:
@@ -697,9 +740,9 @@ class Robot:
     def add_to_file(self, rid, data):
         # self.lock.acquire()
         if rid in self.karto_messages:
-            self.karto_messages[rid].append(data)
+            self.karto_messages[rid] += data
         else:
-            self.karto_messages[rid] = [data]
+            self.karto_messages[rid] = data
         # self.lock.release()
         return True
 
