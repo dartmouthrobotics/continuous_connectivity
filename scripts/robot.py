@@ -201,24 +201,29 @@ class Robot:
     def spin(self):
         r = rospy.Rate(0.1)
         while not rospy.is_shutdown():
+            # try:
             if self.is_exploring:
                 close_devices = self.get_close_devices()
                 if close_devices:
                     received_data = {}
                     data_size = 0
                     for rid in close_devices:
-                        if len(self.load_data_for_id(rid)) > self.share_limit:
-                            rid_data = self.create_buff_data(rid)
+                        size = len(self.load_data_for_id(rid))
+                        if size > self.share_limit:
+                            rid_data = self.create_buff_data(str(rid))
                             pu.log_msg(self.robot_id, "Sharing data with: {}".format(rid), self.debug_mode)
+                            pu.log_msg(self.robot_id, "Sharing data size: {}".format(size), self.debug_mode)
                             new_data = self.shared_data_srv_map[rid](SharedDataRequest(req_data=rid_data))
                             received_data[rid] = new_data.res_data
-                            data_size += self.get_data_size(rid_data.data)
+                            data_size += size
                             data_size += self.get_data_size(new_data.res_data.data)
                             self.delete_data_for_id(rid)
                         # else:
                         #     pu.log_msg(self.robot_id, "No data to share with: {}".format(rid), self.debug_mode)
                     self.report_shared_data(data_size)
                     self.process_received_data(received_data)
+            # except  Exception as e:
+            #     pu.log_msg(self.robot_id, "Error: {}".format(e), self.debug_mode)
             r.sleep()
 
     def process_received_data(self, received_data):
@@ -237,19 +242,17 @@ class Robot:
         return set(devices)
 
     def create_buff_data(self, rid, is_alert=0):
-        buffered_data = None
+        buffered_data = BufferedData()
         message_data = self.load_data_for_id(rid)
-        if message_data:
-            pu.log_msg(self.robot_id, "Contains message data", self.debug_mode)
-            buffered_data = BufferedData()
-            buffered_data.msg_header.header.stamp = rospy.Time.now()
-            buffered_data.msg_header.header.frame_id = '{}'.format(self.robot_id)
-            buffered_data.msg_header.sender_id = str(self.robot_id)
-            buffered_data.msg_header.receiver_id = str(rid)
-            buffered_data.msg_header.topic = 'received_data'
-            buffered_data.secs = []
-            buffered_data.data = message_data
-            buffered_data.alert_flag = is_alert
+        pu.log_msg(self.robot_id, "Contains message data", self.debug_mode)
+        buffered_data.msg_header.header.stamp = rospy.Time.now()
+        buffered_data.msg_header.header.frame_id = '{}'.format(self.robot_id)
+        buffered_data.msg_header.sender_id = str(self.robot_id)
+        buffered_data.msg_header.receiver_id = str(rid)
+        buffered_data.msg_header.topic = 'received_data'
+        buffered_data.secs = []
+        buffered_data.data = message_data
+        buffered_data.alert_flag = is_alert
         return buffered_data
 
     def coverage_callback(self, data):
@@ -403,8 +406,9 @@ class Robot:
                     p = (rob_poses[k].position.x, rob_poses[k].position.y)
                     if p != pose_i and p not in taken_poses:
                         remaining_poses[rob_distances[k]] = rob_poses[k]
-                next_closest_dist = min(list(remaining_poses))
-                auction_feedback[conflicting_robot_id] = (next_closest_dist, remaining_poses[next_closest_dist])
+                if remaining_poses:
+                    next_closest_dist = min(list(remaining_poses))
+                    auction_feedback[conflicting_robot_id] = (next_closest_dist, remaining_poses[next_closest_dist])
         return taken_poses
 
     def create_frontier(self, receiver, ridge):
