@@ -106,23 +106,23 @@ class Robot:
 
         self.exploration_time = rospy.Time.now().to_sec()
         self.candidate_robots = self.frontier_robots + self.base_stations
-        self.debug_mode = rospy.get_param("~debug_mode")
-        self.termination_metric = rospy.get_param("~termination_metric")
-        self.robot_count = rospy.get_param("~robot_count")
-        self.environment = rospy.get_param("~environment")
-        self.graph_scale = rospy.get_param("~graph_scale")
-        self.termination_metric = rospy.get_param("~termination_metric")
-        self.max_exploration_time = rospy.get_param("~max_exploration_time")
-        self.max_coverage = rospy.get_param("~max_coverage")
-        self.max_common_coverage = rospy.get_param("~max_common_coverage")
-        self.target_distance = rospy.get_param('~target_distance')
-        self.target_angle = rospy.get_param('~target_angle')
-        self.share_limit = rospy.get_param('~data_share_threshold')
+        self.debug_mode = rospy.get_param("/debug_mode")
+        self.termination_metric = rospy.get_param("/termination_metric")
+        self.robot_count = rospy.get_param("/robot_count")
+        self.environment = rospy.get_param("/environment")
+        self.graph_scale = rospy.get_param("/graph_scale")
+        self.termination_metric = rospy.get_param("/termination_metric")
+        self.max_exploration_time = rospy.get_param("/max_exploration_time")
+        self.max_coverage = rospy.get_param("/max_coverage")
+        self.max_common_coverage = rospy.get_param("/max_common_coverage")
+        self.target_distance = rospy.get_param('/target_distance')
+        self.target_angle = rospy.get_param('/target_angle')
+        self.share_limit = rospy.get_param('/data_share_threshold')
         self.rate = rospy.Rate(0.1)
-        self.min_hallway_width = rospy.get_param("~min_hallway_width".format(self.robot_id))
-        self.comm_range = rospy.get_param("~comm_range".format(self.robot_id))
-        self.point_precision = rospy.get_param("~point_precision".format(self.robot_id))
-        self.min_edge_length = rospy.get_param("~min_edge_length".format(self.robot_id))
+        self.min_hallway_width = rospy.get_param("/min_hallway_width".format(self.robot_id))
+        self.comm_range = rospy.get_param("/comm_range".format(self.robot_id))
+        self.point_precision = rospy.get_param("/point_precision".format(self.robot_id))
+        self.min_edge_length = rospy.get_param("/min_edge_length".format(self.robot_id))
 
         rospy.Service("/robot_{}/shared_data".format(self.robot_id), SharedData, self.shared_data_handler,
                       buff_size=BUFFER_SIZE)
@@ -177,10 +177,8 @@ class Robot:
                                                         FrontierPoint)
         self.fetch_rendezvous_points = rospy.ServiceProxy('/robot_{}/rendezvous_points'.format(self.robot_id),
                                                           RendezvousPoints)
-        self.shutdown_pub = rospy.Publisher("/shutdown".format(self.robot_id), String, queue_size=10)
-        rospy.Subscriber('/shutdown', String, self.shutdown_callback)
+        rospy.Subscriber('/shutdown', String, self.save_all_data)
         rospy.Subscriber('/coverage'.format(self.robot_id), Coverage, self.coverage_callback)
-        rospy.on_shutdown(self.save_all_data)
         self.exploration_started = False
         self.is_shutdown_caller = False
 
@@ -202,7 +200,6 @@ class Robot:
 
         # ======= pose transformations====================
         self.listener = tf.TransformListener()
-        rospy.on_shutdown(self.save_all_data)
         rospy.loginfo("Robot {} Initialized successfully!!".format(self.robot_id))
 
     def spin(self):
@@ -251,7 +248,10 @@ class Robot:
                     #     pu.log_msg(self.robot_id, "Error in data sharing: {}".format(e), self.debug_mode)
                 else:
                     pu.log_msg(self.robot_id, "Cant share with {} now. Last shared: {} secs ago".format(sender_id,
-                        rospy.Time.now().to_sec() - self.conn_manager[sender_id]), self.debug_mode)
+                                                                                                        rospy.Time.now().to_sec() -
+                                                                                                        self.conn_manager[
+                                                                                                            sender_id]),
+                               self.debug_mode)
             if data_size:
                 self.report_shared_data(data_size)
                 self.process_received_data(received_data)
@@ -459,7 +459,7 @@ class Robot:
         frontier.msg_header.sender_id = str(self.robot_id)
         frontier.msg_header.receiver_id = str(receiver)
         frontier.msg_header.topic = 'allocated_point'
-        frontier.ridge = ridge  #
+        frontier.frontier = ridge  #
         frontier.session_id = ''
         return frontier
 
@@ -483,18 +483,20 @@ class Robot:
                 auction_feedback[rid] = (min_dist, min_pose)
                 taken_poses = self.compute_and_share_auction_points(auction_feedback, frontier_points)
                 ridge = self.compute_next_frontier(taken_poses, frontier_points)
+                new_point = [0.0] * 2
                 if ridge:
-                    new_point = [0.0] * 2
-                    new_point[pu.INDEX_FOR_X] = ridge.nodes[1].position.x
-                    new_point[pu.INDEX_FOR_Y] = ridge.nodes[1].position.y
-                    new_point = pu.scale_down(new_point, self.graph_scale)
-                    self.frontier_point = new_point
-                if self.frontier_point:
-                    self.start_exploration_action(self.frontier_point)
-                    pu.log_msg(self.robot_id, "Action sent to gvgexplore", self.debug_mode)
+                    new_point[pu.INDEX_FOR_X] = ridge.position.x
+                    new_point[pu.INDEX_FOR_Y] = ridge.position.y
                 else:
-                    pu.log_msg(self.robot_id, "No frontier point left".format(self.robot_id), self.debug_mode)
+                    pose = taken_poses[0]
+                    new_point[pu.INDEX_FOR_X] = pose[pu.INDEX_FOR_X]
+                    new_point[pu.INDEX_FOR_Y] = pose[pu.INDEX_FOR_Y]
+                new_point = pu.scale_down(new_point, self.graph_scale)
+                self.frontier_point = new_point
+                self.start_exploration_action(self.frontier_point)
             self.all_feedbacks.clear()
+        else:
+            rospy.logerr("Robot {}: No initial frontiers".format(self.robot_id))
 
     def compute_next_frontier(self, taken_poses, frontier_points):
         ridge = None
@@ -531,10 +533,10 @@ class Robot:
     def shared_frontier_handler(self, req):
         data = req.frontier
         pu.log_msg(self.robot_id, "Received new frontier point", self.debug_mode)
-        self.frontier_ridge = data.ridge
+        self.frontier_ridge = data.frontier
         new_point = [0.0] * 2
-        new_point[pu.INDEX_FOR_X] = self.frontier_ridge.nodes[1].position.x
-        new_point[pu.INDEX_FOR_Y] = self.frontier_ridge.nodes[1].position.y
+        new_point[pu.INDEX_FOR_X] = self.frontier_ridge.position.x
+        new_point[pu.INDEX_FOR_Y] = self.frontier_ridge.position.y
         new_point = pu.scale_down(new_point, self.graph_scale)
         self.frontier_point = new_point
         robot_pose = self.get_robot_pose()
@@ -648,8 +650,9 @@ class Robot:
         if sender_id in self.candidate_robots:
             if self.initial_receipt:
                 self.push_messages_to_receiver([sender_id])
-                thread = Thread(target=self.process_data, args=(sender_id, buff_data,))
-                thread.start()
+                self.process_data(sender_id,buff_data)
+                # thread = Thread(target=self.process_data, args=(sender_id, buff_data,))
+                # thread.start()
                 pu.log_msg(self.robot_id, "Initial data from {}: {} files".format(sender_id, len(buff_data.data)),
                            self.debug_mode)
                 self.initial_data_count += 1
@@ -657,8 +660,7 @@ class Robot:
                     self.initial_receipt = False
                     if self.i_have_least_id():
                         self.wait_for_map_update()
-                        pu.log_msg(self.robot_id, "Computing frontier points Active".format(self.robot_id),
-                                   self.debug_mode)
+                        pu.log_msg(self.robot_id, "Computing frontier points Active".format(self.robot_id),self.debug_mode)
                         self.request_and_share_frontiers()
                     else:
                         pu.log_msg(self.robot_id, "Waiting for frontier points...", self.debug_mode)
@@ -708,13 +710,12 @@ class Robot:
                                                                      rospy.Time(0))
                 robot_pose = (math.floor(robot_loc_val[0]), math.floor(robot_loc_val[1]), robot_loc_val[2])
                 self.global_robot_pose = robot_pose
+            except:
                 count += 1
                 sleep(1)
-            except:
                 # rospy.logerr("Robot {}: Can't fetch robot pose from tf".format(self.robot_id))
                 if count > 5:
                     break
-                pass
 
         return self.global_robot_pose
 
@@ -727,6 +728,8 @@ class Robot:
                 status = goal_status.status
                 if status == ABORTED:
                     pu.log_msg(self.robot_id, "Robot stopped share data..", self.debug_mode)
+                    self.move_to_stop()
+                    self.start_exploration()
 
     def cancel_exploration(self):
         if self.exploration_id:
@@ -739,10 +742,13 @@ class Robot:
 
     def add_to_file(self, rid, data):
         # self.lock.acquire()
-        if rid in self.karto_messages:
-            self.karto_messages[rid] += data
-        else:
-            self.karto_messages[rid] = data
+        try:
+            if rid in self.karto_messages:
+                self.karto_messages[rid] += data
+            else:
+                self.karto_messages[rid] = data
+        except:
+            pass
         # self.lock.release()
         return True
 
@@ -777,10 +783,9 @@ class Robot:
 
     def parse_frontier_response(self, data):
         frontier_points = {}
-        received_ridges = data.ridges
-        for r in received_ridges:
-            p = r.nodes[1]
-            frontier_points[(p.position.x, p.position.y)] = r
+        received_ridges = data.frontiers
+        for p in received_ridges:
+            frontier_points[(p.position.x, p.position.y)] = p
         return frontier_points
 
     def publish_robot_ranges(self):
@@ -836,17 +841,8 @@ class Robot:
         other_robot_pose = cTr.dot(V)
         return other_robot_pose.tolist()
 
-    def save_all_data(self):
-        msg = String()
-        msg.data = '{}'.format(self.robot_id)
-        if not self.is_shutdown_caller:
-            self.is_shutdown_caller = True
-            self.shutdown_pub.publish(msg)
-
-    def shutdown_callback(self, data):
-        if not self.is_shutdown_caller:
-            self.is_shutdown_caller = True
-            rospy.signal_shutdown('Robot {}: Received Shutdown Exploration complete!'.format(self.robot_id))
+    def save_all_data(self, data):
+        rospy.signal_shutdown('Robot {}: Received Shutdown Exploration complete!'.format(self.robot_id))
 
 
 if __name__ == "__main__":

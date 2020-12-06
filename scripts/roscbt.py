@@ -76,11 +76,13 @@ class roscbt:
         self.map_pose = rospy.get_param("~map_pose", [])
         self.world_center = rospy.get_param("~world_center", [])
 
-        self.termination_metric = rospy.get_param("~termination_metric")
-        self.comm_range = rospy.get_param("~comm_range")
-        self.robot_count = rospy.get_param("~robot_count")
-        self.environment = rospy.get_param("~environment")
-        self.run = rospy.get_param("~run")
+        self.termination_metric = rospy.get_param("/termination_metric")
+        self.max_target_info_ratio=rospy.get_param("/max_target_info_ratio")
+        self.comm_range = rospy.get_param("/comm_range")
+        self.method = rospy.get_param("/method")
+        self.robot_count = rospy.get_param("/robot_count")
+        self.environment = rospy.get_param("/environment")
+        self.run = rospy.get_param("/run")
 
         # difference in center of map image and actual simulation
         self.dx = self.world_center[0] - self.map_pose[0]
@@ -132,7 +134,7 @@ class roscbt:
                  "queue_size = 100)".format(i))
         self.shared_data_size = []
         rospy.Subscriber('/shared_data_size', DataSize, self.shared_data_callback)
-        rospy.Subscriber('/shutdown', String, self.shutdown_callback)
+        rospy.Subscriber('/shutdown', String, self.save_all_data)
         self.already_shutdown = False
         rospy.loginfo("ROSCBT Initialized Successfully!")
 
@@ -312,17 +314,15 @@ class roscbt:
             max_connected = connected[key] + 1
             self.connected_robots.append(max_connected)
 
-    def shutdown_callback(self, msg):
-        self.save_all_data()
-        rospy.signal_('ROSCBT: Shutdown command received!')
 
-    def save_all_data(self):
+    def save_all_data(self,data):
         save_data(self.exploration_data,
-                  'continuous/exploration_{}_{}_{}_{}.pickle'.format(self.environment, self.robot_count, self.run,
-                                                                     self.termination_metric))
+                  '{}/exploration_{}_{}_{}_{}_{}.pickle'.format(self.method,self.environment, self.robot_count, self.run,
+                                                                     self.termination_metric, self.max_target_info_ratio))
         save_data(self.shared_data_size,
-                  'continuous/roscbt_data_shared_{}_{}_{}_{}.pickle'.format(self.environment, self.robot_count,
-                                                                            self.run, self.termination_metric))
+                  '{}/roscbt_data_shared_{}_{}_{}_{}_{}.pickle'.format(self.method,self.environment, self.robot_count,
+                                                                            self.run, self.termination_metric, self.max_target_info_ratio))
+        rospy.signal_shutdown('ROSCBT: Shutdown command received!')
 
 
 
