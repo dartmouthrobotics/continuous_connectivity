@@ -623,9 +623,9 @@ class Robot:
                 self.karto_pub.publish(scan)
                 counter += 1
 
-            for rid in self.candidate_robots:
-                if rid != sender_id:
-                    self.add_to_file(rid, data_vals)
+            # for rid in self.candidate_robots:
+            #     if rid != sender_id:
+            #         self.add_to_file(rid, data_vals)
         except Exception as e:
             pu.log_msg(self.robot_id, "Error processing data: {}".format(e))
         self.lock.release()
