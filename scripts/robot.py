@@ -184,6 +184,7 @@ class Robot:
 
         # robot identification sensor
         self.robot_range_pub = rospy.Publisher("/robot_{}/robot_ranges".format(self.robot_id), RobotRange, queue_size=5)
+        self.received_msgs_ts={}
         self.robot_poses = {}
         self.trans_matrices = {}
         self.inverse_trans_matrices = {}
@@ -612,22 +613,33 @@ class Robot:
             devices.append(rs.robot_id)
         self.close_devices = devices
 
+    def save_message(self,scan):
+        rid = scan.robot_id -1
+        ts = scan.header.stamp.to_sec()
+        should_save=False
+        if rid not in self.received_msgs_ts:
+            self.received_msgs_ts[rid]=ts
+            should_save=True
+        else:
+            if self.received_msgs_ts[rid]<ts:
+                self.received_msgs_ts[rid]=ts
+                should_save=True
+        if should_save:
+            self.add_to_file(rid,[scan])
+        return should_save
+
     def process_data(self, sender_id, buff_data):
         self.lock.acquire()
         try:
             data_vals = buff_data.data
             self.last_map_update_time = rospy.Time.now().to_sec()
             counter = 0
-
             for scan in data_vals:
-                self.karto_pub.publish(scan)
+                if self.save_message(scan):
+                    self.karto_pub.publish(scan)
                 counter += 1
-
-            # for rid in self.candidate_robots:
-            #     if rid != sender_id:
-            #         self.add_to_file(rid, data_vals)
         except Exception as e:
-            pu.log_msg(self.robot_id, "Error processing data: {}".format(e))
+            pu.log_msg(self.robot_id, "Error processing data: {}".format(e),self.debug_mode)
         self.lock.release()
 
     def push_messages_to_receiver(self, receiver_ids, is_alert=0):
