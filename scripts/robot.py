@@ -613,9 +613,9 @@ class Robot:
             devices.append(rs.robot_id)
         self.close_devices = devices
 
-    def save_message(self,scan):
-        rid = scan.robot_id -1
-        ts = scan.header.stamp.to_sec()
+    def save_message(self,karto):
+        rid = karto.robot_id -1
+        ts = karto.scan.header.stamp.to_sec()
         should_save=False
         if rid not in self.received_msgs_ts:
             self.received_msgs_ts[rid]=ts
@@ -625,7 +625,7 @@ class Robot:
                 self.received_msgs_ts[rid]=ts
                 should_save=True
         if should_save:
-            self.add_to_file(rid,[scan])
+            self.add_to_file(rid,[karto])
         return should_save
 
     def process_data(self, sender_id, buff_data):
