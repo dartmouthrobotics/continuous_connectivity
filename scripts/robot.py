@@ -259,9 +259,9 @@ class Robot:
 
     def process_received_data(self, received_data):
         for rid, buff_data in received_data.items():
-            thread = Thread(target=self.process_data, args=(rid, buff_data,))
-            thread.start()
-            # self.process_data(rid, buff_data)
+            # thread = Thread(target=self.process_data, args=(rid, buff_data,))
+            # thread.start()
+            self.process_data(rid, buff_data)
 
     def get_close_devices(self):
         ss_data = self.signal_strength_srv(HotSpotRequest(robot_id=str(self.robot_id)))
@@ -417,8 +417,9 @@ class Robot:
         sender_id = received_buff_data.msg_header.header.frame_id
         self.update_share_time(sender_id)
         buff_data = self.create_buff_data(sender_id, is_alert=0)
-        thread = Thread(target=self.process_data, args=(sender_id, received_buff_data,))
-        thread.start()
+        self.process_data(sender_id,received_buff_data)
+        # thread = Thread(target=self.process_data, args=(sender_id, received_buff_data,))
+        # thread.start()
         return SharedDataResponse(poses=[], res_data=buff_data)
 
     def compute_and_share_auction_points(self, auction_feedback, frontier_points):
@@ -629,7 +630,7 @@ class Robot:
         return should_save
 
     def process_data(self, sender_id, buff_data):
-        self.lock.acquire()
+        # self.lock.acquire()
         try:
             data_vals = buff_data.data
             self.last_map_update_time = rospy.Time.now().to_sec()
@@ -640,7 +641,7 @@ class Robot:
                 counter += 1
         except Exception as e:
             pu.log_msg(self.robot_id, "Error processing data: {}".format(e),self.debug_mode)
-        self.lock.release()
+        # self.lock.release()
 
     def push_messages_to_receiver(self, receiver_ids, is_alert=0):
         for rid in receiver_ids:
