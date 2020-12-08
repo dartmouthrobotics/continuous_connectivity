@@ -91,6 +91,10 @@ class roscbt:
         self.sent_messages = []
         self.received_messages = []
 
+        # TODO
+        self.robot_pose = {}
+        self.prev_poses = {}
+
         # import message types
         for topic in self.topics:
             msg_pkg = topic["message_pkg"]
@@ -123,8 +127,6 @@ class roscbt:
                             self.publisher_map[topic_name][receiver_id] = pub
 
         # ======= pose transformations====================
-        self.robot_pose = {}
-        self.prev_poses = {}
         for i in self.robot_ids:
             exec("def a_{0}(self, data): self.robot_pose[{0}] = (data.pose.pose.position.x,data.pose.pose.position.y,"
                  "(data.pose.pose.orientation.x,data.pose.pose.orientation.y,data.pose.pose.orientation.z,"
