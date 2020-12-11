@@ -24,7 +24,7 @@ from os.path import exists
 from gvgexploration.srv import *
 import project_utils as pu
 from std_msgs.msg import String
-
+from visualization_msgs.msg import Marker
 INF = 1000000000000
 NEG_INF = -1000000000000
 MAX_ATTEMPTS = 2
@@ -82,7 +82,6 @@ class Robot:
         self.is_initial_rendezvous_sharing = True
         self.received_choices = {}
         self.is_sender = False
-        self.previous_pose = None
         self.prev_slope = 0
         self.map_previous_pose = None
         self.map_prev_slope = 0
@@ -118,6 +117,15 @@ class Robot:
         self.target_distance = rospy.get_param('/target_distance')
         self.target_angle = rospy.get_param('/target_angle')
         self.share_limit = rospy.get_param('/data_share_threshold')
+
+        self.max_target_info_ratio=rospy.get_param("/max_target_info_ratio")
+        self.method = rospy.get_param("/method")
+        self.robot_count = rospy.get_param("/robot_count")
+        self.run = rospy.get_param("/run")
+
+        self.traveled_distance=[]
+        self.previous_point=[]
+
         self.rate = rospy.Rate(0.1)
         self.min_hallway_width = rospy.get_param("/min_hallway_width".format(self.robot_id))
         self.comm_range = rospy.get_param("/comm_range".format(self.robot_id))
@@ -179,6 +187,7 @@ class Robot:
                                                           RendezvousPoints)
         rospy.Subscriber('/shutdown', String, self.save_all_data)
         rospy.Subscriber('/coverage'.format(self.robot_id), Coverage, self.coverage_callback)
+        rospy.Subscriber('/robot_{}/navigator/markers'.format(self.robot_id), Marker, self.goal_callback)
         self.exploration_started = False
         self.is_shutdown_caller = False
 
@@ -189,6 +198,8 @@ class Robot:
         self.trans_matrices = {}
         self.inverse_trans_matrices = {}
         self.failed_points = []
+
+
         all_robots = self.candidate_robots + [self.robot_id]
         for i in all_robots:
             s = "def a_" + str(i) + "(self, data): self.robot_poses[" + str(i) + "] = (data.pose.pose.position.x," \
@@ -256,6 +267,18 @@ class Robot:
             if data_size:
                 self.report_shared_data(data_size)
                 self.process_received_data(received_data)
+
+
+    def goal_callback(self,data):
+        rospy.logerr('Received a new pose: {}'.format(data.pose.position))
+        if len(self.previous_point)==0:
+            self.previous_point= self.get_robot_pose()
+        goal =[0.0]*2
+        goal[pu.INDEX_FOR_X]=data.pose.position.x
+        goal[pu.INDEX_FOR_X]=data.pose.position.y
+        self.traveled_distance.append({'time': rospy.Time.now().to_sec(),'traved_distance': pu.D(self.previous_point, goal)})
+        self.previous_point=goal
+
 
     def process_received_data(self, received_data):
         for rid, buff_data in received_data.items():
@@ -350,7 +373,6 @@ class Robot:
                 self.add_to_file(rid, [data])
             if self.is_initial_data_sharing:
                 self.push_messages_to_receiver(self.candidate_robots)
-                self.previous_pose = self.get_robot_pose()
                 self.is_initial_data_sharing = False
 
     def map_callback(self, data):
@@ -855,6 +877,7 @@ class Robot:
         return other_robot_pose.tolist()
 
     def save_all_data(self, data):
+        pu.save_data(self.traveled_distance,'{}/traveled_distance_{}_{}_{}_{}_{}_{}.pickle'.format(self.method, self.environment,self.robot_count,self.run,self.termination_metric,self.robot_id,self.max_target_info_ratio))
         rospy.signal_shutdown('Robot {}: Received Shutdown Exploration complete!'.format(self.robot_id))
 
 
