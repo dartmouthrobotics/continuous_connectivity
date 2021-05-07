@@ -25,6 +25,8 @@ from gvgexploration.srv import *
 import project_utils as pu
 from std_msgs.msg import String
 from visualization_msgs.msg import Marker
+from scipy.optimize import linear_sum_assignment
+
 INF = 1000000000000
 NEG_INF = -1000000000000
 MAX_ATTEMPTS = 2
@@ -442,7 +444,7 @@ class Robot:
         self.process_data(sender_id,received_buff_data)
         # thread = Thread(target=self.process_data, args=(sender_id, received_buff_data,))
         # thread.start()
-        return SharedDataResponse(poses=[], res_data=buff_data)
+        return SharedDataResponse(res_data=buff_data)
 
     def compute_and_share_auction_points(self, auction_feedback, frontier_points):
         all_robots = list(auction_feedback)
@@ -476,51 +478,59 @@ class Robot:
                     auction_feedback[conflicting_robot_id] = (next_closest_dist, remaining_poses[next_closest_dist])
         return taken_poses
 
-    def create_frontier(self, receiver, ridge):
+    def request_and_share_frontiers(self, direction=0):
+        frontier_point_response = self.fetch_frontier_points(FrontierPointRequest(count=len(self.candidate_robots) + 1))
+        frontier_points = frontier_point_response.frontiers
+        robot_assignments = {}
+        if frontier_points:
+            rpose=self.get_robot_pose()
+            distances=[pu.D(rpose,(p.position.x,p.position.y)) for p in frontier_points]
+            bgraph = {self.robot_id: [distances[i] for i in range(len(frontier_points))]}
+            auction = self.create_auction(frontier_points)
+            pu.log_msg(self.robot_id, "session devices: {}".format(self.candidate_robots), self.debug_mode)
+            for rid in self.candidate_robots:
+                pu.log_msg(self.robot_id, "Action Request to Robot {}".format(rid), self.debug_mode)
+                auction_response = self.shared_point_srv_map[rid](SharedPointRequest(req_data=auction))
+                if auction_response.auction_accepted == 1:
+                    data = auction_response.res_data
+                    bgraph[int(rid)] = [data.distances[i] for i in range(len(data.distances))]
+
+            robot_assignments = self.hungarian_assignment(bgraph, frontier_points)
+
+            rospy.logerr(robot_assignments[self.robot_id])
+            self.frontier_point = [frontier_points[robot_assignments[self.robot_id]].position.x,frontier_points[robot_assignments[self.robot_id]].position.y]
+            self.start_exploration_action(self.frontier_point)
+
+
+    def create_frontier(self, receiver, frontier_id, frontier_points):
         frontier = Frontier()
-        frontier.msg_header.header.frame_id = '{}'.format(self.robot_id)
+        frontier.msg_header.header.frame_id = 'robot_{}/map'.format(self.robot_id)
         frontier.msg_header.header.stamp = rospy.Time.now()
         frontier.msg_header.sender_id = str(self.robot_id)
         frontier.msg_header.receiver_id = str(receiver)
         frontier.msg_header.topic = 'allocated_point'
-        frontier.frontier = ridge  #
+        frontier.frontier_id = frontier_id  #
+        frontier.frontiers = frontier_points
         frontier.session_id = ''
         return frontier
 
-    def request_and_share_frontiers(self, direction=0):
-        frontier_point_response = self.fetch_frontier_points(FrontierPointRequest(count=len(self.candidate_robots) + 1))
-        frontier_points = self.parse_frontier_response(frontier_point_response)
-        if frontier_points:
-            auction = self.create_auction(frontier_points)
-            auction_feedback = {}
-            for rid in self.candidate_robots:
-                auction_response = self.shared_point_srv_map[rid](SharedPointRequest(req_data=auction))
-                data = auction_response.res_data
-                self.all_feedbacks[rid] = data
-                m = len(data.distances)
-                min_dist = max(data.distances)
-                min_pose = None
-                for i in range(m):
-                    if min_dist >= data.distances[i]:
-                        min_pose = data.poses[i]
-                        min_dist = data.distances[i]
-                auction_feedback[rid] = (min_dist, min_pose)
-                taken_poses = self.compute_and_share_auction_points(auction_feedback, frontier_points)
-                ridge = self.compute_next_frontier(taken_poses, frontier_points)
-                new_point = [0.0] * 2
-                if ridge:
-                    new_point[pu.INDEX_FOR_X] = ridge.position.x
-                    new_point[pu.INDEX_FOR_Y] = ridge.position.y
-                else:
-                    pose = taken_poses[0]
-                    new_point[pu.INDEX_FOR_X] = pose[pu.INDEX_FOR_X]
-                    new_point[pu.INDEX_FOR_Y] = pose[pu.INDEX_FOR_Y]
-                new_point = pu.scale_down(new_point, self.graph_scale)
-                self.frontier_point = new_point
-                self.start_exploration_action(self.frontier_point)
-            self.all_feedbacks.clear()
-        else:
-            rospy.logerr("Robot {}: No initial frontiers".format(self.robot_id))
+    def hungarian_assignment(self, bgraph, frontiers):
+        rids = list(bgraph)
+        rids.sort()
+        rcosts = []
+        for i in rids:
+            rcosts.append(bgraph[i])
+        cost = np.array(rcosts)
+        row_ind, col_ind = linear_sum_assignment(cost)
+        assignments = {}
+        for i in range(len(row_ind)):
+            if i != self.robot_id:
+                frontier = self.create_frontier(i, col_ind[i], frontiers)
+                res = self.allocation_srv_map[str(i)](SharedFrontierRequest(frontier=frontier))
+            assignments[i] = col_ind[i]
+        rospy.logerr("Do hungarian assignment: {}".format(assignments))
+        return assignments
+
 
     def compute_next_frontier(self, taken_poses, frontier_points):
         ridge = None
@@ -545,19 +555,13 @@ class Robot:
         auction.msg_header.header.stamp = rospy.Time.now()
         auction.session_id = ''
         auction.distances = distances
-        auction.poses = []
-        self.all_feedbacks.clear()
-        for k, v in rendezvous_poses.items():
-            pose = Pose()
-            pose.position.x = k[pu.INDEX_FOR_X]
-            pose.position.y = k[pu.INDEX_FOR_Y]
-            auction.poses.append(pose)
+        auction.poses = rendezvous_poses
         return auction
 
     def shared_frontier_handler(self, req):
         data = req.frontier
         pu.log_msg(self.robot_id, "Received new frontier point", self.debug_mode)
-        self.frontier_ridge = data.frontier
+        self.frontier_ridge = data.frontiers[data.frontier_id]
         new_point = [0.0] * 2
         new_point[pu.INDEX_FOR_X] = self.frontier_ridge.position.x
         new_point[pu.INDEX_FOR_Y] = self.frontier_ridge.position.y

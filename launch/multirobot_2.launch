@@ -12,11 +12,13 @@
 </node>
 
 <rosparam command="load" file="$(find gvgexploration)/param/gvg_config.yaml" subst_value="true"/>
-
+<node name="map_server" pkg="map_server" type="map_server" args="$(find gvgexploration)/param/$(arg environment)_map.yaml">
+    <remap from="map" to="latched_map"/>
+</node>
 <group ns="robot_0">
     <node pkg="nav2d_navigator" type="explore_client" name="explore_client"/>
     <include file="$(find gvgexploration)/launch/nodes.launch">
-        <arg name="robot_name" value="1"/>
+        <arg name="robot" value="1"/>
     </include>
     <include file="$(find continuous_connectivity)/launch/robot.launch">
         <arg name="robot_name" value="0" />
@@ -28,7 +30,7 @@
 <group ns="robot_1">
     <node pkg="nav2d_navigator" type="explore_client" name="explore_client"/>
     <include file="$(find gvgexploration)/launch/nodes.launch">
-        <arg name="robot_name" value="2"/>
+        <arg name="robot" value="2"/>
     </include>
     <include file="$(find continuous_connectivity)/launch/robot.launch">
         <arg name="robot_name" value="1" />
@@ -37,7 +39,7 @@
     </include>
 </group>
 
-<node name="roscbt" pkg="continuous_connectivity" type="roscbt.py">
+<node name="roscbt" pkg="gvgexploration" type="roscbt.py">
     <rosparam file="$(find gvgexploration)/param/roscbt_config$(arg robot_count).yaml"/>
 </node>
 
